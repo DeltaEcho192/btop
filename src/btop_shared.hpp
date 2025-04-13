@@ -434,3 +434,17 @@ namespace Proc {
 				   int cur_depth, bool collapsed, const string& filter,
 				   bool found = false, bool no_update = false, bool should_filter = false);
 }
+
+namespace Fan {
+	extern string box;
+	extern int x, y, width, height, min_width, min_height;
+	extern bool shown, redraw;
+
+	struct fan_info {
+		vector<deque<long long>> fan_speed;
+	};
+
+	auto collect(bool no_update = false) -> fan_info&;
+
+	string draw(const fan_info& fan, bool force_redraw = false, bool data_same = false);
+}
