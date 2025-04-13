@@ -441,10 +441,15 @@ namespace Fan {
 	extern bool shown, redraw;
 
 	struct fan_info {
-		vector<deque<long long>> fan_speed;
+		int64_t fan_rpm;
+	};
+	
+	struct fans_info {
+		std::unordered_map<string, fan_info> fans;
 	};
 
-	auto collect(bool no_update = false) -> fan_info&;
+	auto discover_fans() -> std::vector<string>;
+	auto collect(bool no_update = false) -> fans_info&;
 
-	string draw(const fan_info& fan, bool force_redraw = false, bool data_same = false);
+	string draw(const fans_info& fan, bool force_redraw = false, bool data_same = false);
 }

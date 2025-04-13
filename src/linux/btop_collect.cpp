@@ -34,6 +34,7 @@ tab-size = 4
 #include <dlfcn.h>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 
 #if defined(RSMI_STATIC)
 	#include <rocm_smi/rocm_smi.h>
@@ -3007,5 +3008,38 @@ namespace Tools {
 			catch (const std::out_of_range&) {}
 		}
         throw std::runtime_error("Failed to get uptime from " + string{Shared::procPath} + "/uptime");
+	}
+}
+
+namespace Fan {
+	// TODO Fix this in the future and add to correct config discovery and path.
+	const std::string fan_base_path = "/sys/devices/platform/nct6683.2592/hwmon/hwmon7/";
+	const std::string fan_search_1 ("fan");
+	const std::string fan_search_2 ("_input");
+	fans_info current_fans {};
+
+	auto discover_fans() -> std::vector<string> {
+		// Find all the availlable fans on the system.
+			std::vector<string> fan_names = {};
+		    try {
+				for (const auto& entry : fs::directory_iterator(fan_base_path)) {
+					if (entry.path().string().find(fan_search_1) == std::string::npos 
+							and entry.path().string().find(fan_search_2) == std::string::npos) {
+						std::cout << "Fan Input Path:" << entry.path() << '\n';
+					}
+				}
+			} catch (const fs::filesystem_error& e) {
+				std::cerr << "Filesystem error: " << e.what() << '\n';
+			} catch (const std::exception& e) {
+				std::cerr << "General error: " << e.what() << '\n';
+			}
+
+			return fan_names;
+	}
+
+	auto collect(bool no_update) -> fans_info& {
+		if (Runner::stopping or (no_update)) return current_fans;
+
+		return current_fans;
 	}
 }
