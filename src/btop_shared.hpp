@@ -439,6 +439,7 @@ namespace Fan {
 	extern string box;
 	extern int x, y, width, height, min_width, min_height;
 	extern bool shown, redraw;
+	extern vector<string> fan_paths;
 
 	struct fan_info {
 		int64_t fan_rpm;
@@ -448,7 +449,7 @@ namespace Fan {
 		std::unordered_map<string, fan_info> fans;
 	};
 
-	auto discover_fans() -> std::vector<string>;
+	void discover_fans();
 	auto collect(bool no_update = false) -> fans_info&;
 
 	string draw(const fans_info& fan, bool force_redraw = false, bool data_same = false);
