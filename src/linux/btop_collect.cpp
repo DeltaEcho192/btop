@@ -245,6 +245,7 @@ namespace Shared {
 	long pageSize, clkTck, coreCount;
 
 	void init() {
+		Fan::discover_fans();
 
 		//? Shared global variables init
 		procPath = (fs::is_directory(fs::path("/proc")) and access("/proc", R_OK) != -1) ? "/proc" : "";
@@ -3017,29 +3018,51 @@ namespace Fan {
 	const std::string fan_search_1 ("fan");
 	const std::string fan_search_2 ("_input");
 	fans_info current_fans {};
+	vector<string> fan_paths = {};
 
-	auto discover_fans() -> std::vector<string> {
+	void discover_fans() {
 		// Find all the availlable fans on the system.
-			std::vector<string> fan_names = {};
 		    try {
 				for (const auto& entry : fs::directory_iterator(fan_base_path)) {
-					if (entry.path().string().find(fan_search_1) == std::string::npos 
-							and entry.path().string().find(fan_search_2) == std::string::npos) {
-						std::cout << "Fan Input Path:" << entry.path() << '\n';
+					if (entry.path().string().find(fan_search_1) != std::string::npos 
+							and entry.path().string().find(fan_search_2) != std::string::npos) {
+						Logger::debug("Fan Input Path: ");
+						Logger::debug(entry.path());
+						std::string::size_type n;
+						n = entry.path().string().find_last_of("/");
+						string fan_name = entry.path().string().substr(n+1, 4);
+						current_fans.fans.insert({fan_name, {0}});
+						Logger::debug(fan_name);
+						fan_paths.push_back(entry.path().string());
 					}
 				}
 			} catch (const fs::filesystem_error& e) {
-				std::cerr << "Filesystem error: " << e.what() << '\n';
+				Logger::error("Filesystem error: ");
+				Logger::error(e.what());
 			} catch (const std::exception& e) {
-				std::cerr << "General error: " << e.what() << '\n';
+				Logger::error("General error: ");
+				Logger::error(e.what());
 			}
-
-			return fan_names;
+			collect(false);
 	}
 
 	auto collect(bool no_update) -> fans_info& {
 		if (Runner::stopping or (no_update)) return current_fans;
-
+		string rpm;
+		vector<string>::iterator it;
+		for (it = fan_paths.begin(); it != fan_paths.end(); ++it) {
+			ifstream fan_rpm(*it);
+			if (fan_rpm.good()) {
+				fan_rpm >> rpm;
+				std::string::size_type n;
+				std::string full_path = *it;
+				n = full_path.find_last_of("/");
+				string fan_name = full_path.substr(n+1, 4);
+				Logger::debug("RPM: ");
+				Logger::debug(rpm);
+				current_fans.fans[fan_name].fan_rpm = strtoll(rpm.c_str(), NULL, 10);
+			}
+		}
 		return current_fans;
 	}
 }
