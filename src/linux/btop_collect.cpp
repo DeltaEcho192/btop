@@ -3013,56 +3013,59 @@ namespace Tools {
 }
 
 namespace Fan {
-	// TODO Fix this in the future and add to correct config discovery and path.
-	const std::string fan_base_path = "/sys/devices/platform/nct6683.2592/hwmon/hwmon7/";
-	const std::string fan_search_1 ("fan");
-	const std::string fan_search_2 ("_input");
-	fans_info current_fans {};
-	vector<string> fan_paths = {};
+// TODO Fix this in the future and add to correct config discovery and path.
+const std::string fan_base_path =
+    "/sys/devices/platform/nct6683.2592/hwmon/hwmon7/";
+const std::string fan_search_1("fan");
+const std::string fan_search_2("_input");
+fans_info current_fans{};
+vector<string> fan_paths = {};
 
-	void discover_fans() {
-		// Find all the availlable fans on the system.
-		    try {
-				for (const auto& entry : fs::directory_iterator(fan_base_path)) {
-					if (entry.path().string().find(fan_search_1) != std::string::npos 
-							and entry.path().string().find(fan_search_2) != std::string::npos) {
-						Logger::debug("Fan Input Path: ");
-						Logger::debug(entry.path());
-						std::string::size_type n;
-						n = entry.path().string().find_last_of("/");
-						string fan_name = entry.path().string().substr(n+1, 4);
-						current_fans.fans.insert({fan_name, {0}});
-						Logger::debug(fan_name);
-						fan_paths.push_back(entry.path().string());
-					}
-				}
-			} catch (const fs::filesystem_error& e) {
-				Logger::error("Filesystem error: ");
-				Logger::error(e.what());
-			} catch (const std::exception& e) {
-				Logger::error("General error: ");
-				Logger::error(e.what());
-			}
-			collect(false);
-	}
+void discover_fans() {
+  // Find all the availlable fans on the system.
+  try {
+    for (const auto &entry : fs::directory_iterator(fan_base_path)) {
+      if (entry.path().string().find(fan_search_1) != std::string::npos and
+          entry.path().string().find(fan_search_2) != std::string::npos) {
+        Logger::debug("Fan Input Path: ");
+        Logger::debug(entry.path());
+        std::string::size_type n;
+        n = entry.path().string().find_last_of("/");
+        string fan_name = entry.path().string().substr(n + 1, 4);
+        current_fans.fans.insert({fan_name, {0}});
+        Logger::debug(fan_name);
+        fan_paths.push_back(entry.path().string());
+      }
+    }
+  } catch (const fs::filesystem_error &e) {
+    Logger::error("Filesystem error: ");
+    Logger::error(e.what());
+  } catch (const std::exception &e) {
+    Logger::error("General error: ");
+    Logger::error(e.what());
+  }
+}
 
-	auto collect(bool no_update) -> fans_info& {
-		if (Runner::stopping or (no_update)) return current_fans;
-		string rpm;
-		vector<string>::iterator it;
-		for (it = fan_paths.begin(); it != fan_paths.end(); ++it) {
-			ifstream fan_rpm(*it);
-			if (fan_rpm.good()) {
-				fan_rpm >> rpm;
-				std::string::size_type n;
-				std::string full_path = *it;
-				n = full_path.find_last_of("/");
-				string fan_name = full_path.substr(n+1, 4);
-				Logger::debug("RPM: ");
-				Logger::debug(rpm);
-				current_fans.fans[fan_name].fan_rpm = strtoll(rpm.c_str(), NULL, 10);
-			}
-		}
-		return current_fans;
-	}
+auto collect(bool no_update) -> fans_info & {
+  if (Runner::stopping or (no_update))
+    return current_fans;
+  string rpm;
+  vector<string>::iterator it;
+  for (it = fan_paths.begin(); it != fan_paths.end(); ++it) {
+    ifstream fan_rpm(*it);
+    if (fan_rpm.good()) {
+      fan_rpm >> rpm;
+      std::string::size_type n;
+      std::string full_path = *it;
+      n = full_path.find_last_of("/");
+      string fan_name = full_path.substr(n + 1, 4);
+      Logger::debug("RPM: ");
+      Logger::debug(rpm);
+      current_fans.fans.at(fan_name).push_back(strtoll(rpm.c_str(), NULL, 10));
+      while (cmp_greater(current_fans.fans.at(fan_name).size(), width * 2)) {
+		  current_fans.fans.at(fan_name).pop_front();
+	  }
+    }
+  }
+  return current_fans;
 }

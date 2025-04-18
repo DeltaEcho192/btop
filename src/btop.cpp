@@ -742,6 +742,20 @@ namespace Runner {
 					}
 				}
 
+				//? Fan
+				try {
+					if (Global::debug) debug_timer("fan", collect_begin);
+
+					Logger::debug("Collecting Fan Stats");
+					auto fan = Fan::collect(conf.no_update);
+
+					if (Global::debug) debug_timer("fan", draw_begin);
+					if (Global::debug) debug_timer("fan", draw_done);
+					
+				} catch (const std::exception& e) {
+					throw std::runtime_error("Fan:: -> " + string{e.what()});
+				}
+
 			}
 			catch (const std::exception& e) {
 				Global::exit_error_msg = "Exception in runner thread -> " + string{e.what()};
@@ -801,7 +815,7 @@ namespace Runner {
 			#ifdef GPU_SUPPORT
 				for (const string name : {"cpu", "mem", "net", "proc", "gpu", "total"}) {
 			#else
-				for (const string name : {"cpu", "mem", "net", "proc", "total"}) {
+				for (const string name : {"cpu", "mem", "net", "proc", "fan", "total"}) {
 			#endif
 					if (not debug_times.contains(name)) debug_times[name] = {0,0};
 					const auto& [time_collect, time_draw] = debug_times.at(name);
@@ -1119,6 +1133,7 @@ int main(int argc, char **argv) {
 		Global::_runner_started = true;
 	}
 
+	Logger::debug("Got to after thread create");
 	//? Calculate sizes of all boxes
 	Config::presetsValid(Config::getS("presets"));
 	if (Global::arg_preset >= 0) {
@@ -1137,7 +1152,9 @@ int main(int argc, char **argv) {
 
 	}
 
+	Logger::debug("Got to Draw Calc Sizes");
 	Draw::calcSizes();
+	Logger::debug("Got to After Draw Calc Sizes");
 
 	//? Print out box outlines
 	cout << Term::sync_start << Cpu::box << Mem::box << Net::box << Proc::box << Term::sync_end << flush;
