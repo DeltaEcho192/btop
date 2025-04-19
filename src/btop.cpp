@@ -750,6 +750,7 @@ namespace Runner {
 					auto fan = Fan::collect(conf.no_update);
 
 					if (Global::debug) debug_timer("fan", draw_begin);
+					if (not pause_output) output += Fan::draw(fan, conf.force_redraw, conf.no_update);
 					if (Global::debug) debug_timer("fan", draw_done);
 					
 				} catch (const std::exception& e) {

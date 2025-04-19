@@ -1981,26 +1981,27 @@ namespace Fan {
 		out.reserve(height * width);
 
 		if (redraw) {
+			Logger::debug(box);
 			out += box;
 			fan_graphs.clear();
-			
 			fan_graphs["fan1"] = Draw::Graph{fan_meter, graph_height, "Fan", fans.fans.at("fan1"), graph_symbol};
 
 		}
 
 		int cx = 1, cy =1;
-		string divider = (graph_height > 0 ? Mv::l(2) + Theme::c("fan_box") + Symbols::div_left + Theme::c("div_line") + Symbols::h_line * (fan_width - 1)
-						+ Symbols::div_right + Mv::l(fan_width - 1) + Theme::c("main_fg") : "");
-		string up = (graph_height >= 2 ? Mv::l(fan_width - 2) + Mv::u(graph_height - 1) : "");
+		//string divider = (graph_height > 0 ? Mv::l(2) + Theme::c("fan_box") + Symbols::div_left + Theme::c("div_line") + Symbols::h_line * (fan_width - 1)
+		//				+ Symbols::div_right + Mv::l(fan_width - 1) + Theme::c("main_fg") : "");
+		//string up = (graph_height >= 2 ? Mv::l(fan_width - 2) + Mv::u(graph_height - 1) : "");
 
 		
 
 		string title = capitalize("fan1");
 		const string humanized = floating_humanizer(fans.fans.at("fan1").front());
-		const int offset = max(0, divider.empty() ? 9 - (int)humanized.size() : 0);
+		//const int offset = max(0, divider.empty() ? 9 - (int)humanized.size() : 0);
 		const string graphics = (
 				fan_graphs.contains("fan1") ? fan_graphs.at("fan1")(fans.fans.at("fan1"), redraw or data_same)
 				: "");
+		Logger::debug(graphics);
 		out += Mv::to(y+1+cy, x+1+cx) + ljust(title, (1)) + (graph_height >= 2 ? "" : " ")
 			+ graphics + Theme::c("title");
 		cy += (graph_height == 0 ? 1 : graph_height);
@@ -2313,6 +2314,7 @@ namespace Draw {
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "fan", "", 9);
 			Logger::debug("Fan calc 5");
 			Logger::debug("End of fan box calculations");
+//			Logger::debug(box);
 		}
 
 		//* Calculate and draw proc box outlines
