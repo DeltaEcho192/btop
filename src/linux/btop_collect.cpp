@@ -3069,3 +3069,4 @@ auto collect(bool no_update) -> fans_info & {
   }
   return current_fans;
 }
+}
