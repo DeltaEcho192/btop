@@ -1365,7 +1365,7 @@ namespace Mem {
 }
 
 namespace Net {
-	int width_p = 45, height_p = 32;
+	int width_p = 45, height_p = 20;
 	int min_width = 36, min_height = 6;
 	int x = 1, y, width = 20, height;
 	int b_x, b_y, b_width, b_height, d_graph_height, u_graph_height;
@@ -1962,7 +1962,7 @@ namespace Proc {
 }
 
 namespace Fan {
-	int width_p = 45, height_p = 25;
+	int width_p = 45, height_p = 15;
 	int min_width = 36, min_height = 10;
 	int x = 1, y, width = 20, height;
 	int fan_width, divider, fan_height, fan_size, fan_meter, graph_height;
@@ -2059,6 +2059,7 @@ namespace Draw {
 		Mem::shown = s_contains(boxes, "mem");
 		Fan::shown = true;
 		Net::shown = s_contains(boxes, "net");
+		Logger::debug(std::to_string(Net::shown));
 		Proc::shown = s_contains(boxes, "proc");
 
 		//* Calculate and draw cpu box outlines
@@ -2117,6 +2118,7 @@ namespace Draw {
 			b_x = x + width - b_width - 1;
 			b_y = y + ceil((double)(height - 2) / 2) - ceil((double)b_height / 2) + 1;
 
+			Logger::debug("Calc Box CPU");
 			box = createBox(x, y, width, height, Theme::c("cpu_box"), true, (cpu_bottom ? "" : "cpu"), (cpu_bottom ? "cpu" : ""), 1);
 
 			auto& custom = Config::getS("custom_cpu_name");
@@ -2171,6 +2173,7 @@ namespace Draw {
 				string name = Config::getS(std::string("custom_gpu_name") + (char)(shown_panels[i]+'0'));
 				if (name.empty()) name = gpu_names[shown_panels[i]];
 
+				Logger::debug("Calc Box GPU");
 				box[i] += createBox(b_x_vec[i], b_y_vec[i], b_width, b_height_vec[i], "", false, name.substr(0, b_width-5));
 			}
 		}
@@ -2185,7 +2188,14 @@ namespace Draw {
 
 			width = round((double)Term::width * (Proc::shown ? width_p : 100) / 100);
 		#ifdef GPU_SUPPORT
-			height = ceil((double)Term::height * ((100 - Net::height_p * Net::shown*4 - Fan::height_p * Fan::shown*4) / ((Gpu::shown != 0 and Cpu::shown) + 4)) / 100) - Cpu::height - Gpu::height*Gpu::shown;
+			Logger::debug(std::to_string(Term::height));
+			Logger::debug(std::to_string(Net::height_p));
+			Logger::debug(std::to_string(Net::shown));
+			Logger::debug(std::to_string(Gpu::shown));
+			Logger::debug(std::to_string(Cpu::shown));
+			Logger::debug(std::to_string(Cpu::height));
+			Logger::debug(std::to_string(Gpu::height));
+			height = ceil((double)Term::height * (100 - Net::height_p * Net::shown*2 - Fan::height_p * Fan::shown * 2 / ((Gpu::shown != 0 and Cpu::shown) + 8)) / 100) - Cpu::height - Gpu::height*Gpu::shown;
 		#else
 			height = ceil((double)Term::height * (100 - Cpu::height_p * Cpu::shown - Net::height_p * Net::shown) / 100) + 1;
 		#endif
@@ -2233,6 +2243,8 @@ namespace Draw {
 				if (disks_width < 25) disk_meter += 14;
 			}
 
+			Logger::debug("Calc Box MEM");
+			Logger::debug(std::to_string(height));
 			box = createBox(x, y, width, height, Theme::c("mem_box"), true, "mem", "", 2);
 			box += Mv::to(y, (show_disks ? divider + 2 : x + width - 9)) + Theme::c("mem_box") + Symbols::title_left + (show_disks ? Fx::b : "")
 				+ Theme::c("hi_fg") + 'd' + Theme::c("title") + "isks" + Fx::ub + Theme::c("mem_box") + Symbols::title_right;
@@ -2249,7 +2261,7 @@ namespace Draw {
 			using namespace Net;
 			width = round((double)Term::width * (Proc::shown ? width_p : 100) / 100);
 		#ifdef GPU_SUPPORT
-			height = Term::height - Cpu::height - Gpu::height*Gpu::shown - Mem::height;
+			height = ceil(((double) Term::height - Cpu::height - Gpu::height*Gpu::shown - Mem::height) * 0.5);
 		#else
 			height = Term::height - Cpu::height - Mem::height;
 		#endif
@@ -2270,6 +2282,11 @@ namespace Draw {
 			d_graph_height = round((double)(height - 2) / 2);
 			u_graph_height = height - 2 - d_graph_height;
 
+			Logger::debug("Calc Box Net");
+			Logger::debug(std::to_string(height));
+			Logger::debug(std::to_string(Term::height));
+			Logger::debug(std::to_string(Cpu::height));
+			Logger::debug(std::to_string(Gpu::height));
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "net", "", 3);
 			box += createBox(b_x, b_y, b_width, b_height, "", false, "download", "upload");
 		}
@@ -2280,7 +2297,7 @@ namespace Draw {
 			width = round((double)Term::width * (Proc::shown ? width_p : 100) / 100);
 			Logger::debug("Fan calc 1");
 #ifdef GPU_SUPPORT
-			height = Term::height - Cpu::height - Gpu::height*Gpu::shown - Mem::height;
+			height = Term::height - Cpu::height - Gpu::height*Gpu::shown - Mem::height - Net::height;
 			Logger::debug("Fan calc 2");
 #else
 				height = Term::height - Cpu::height - Mem::height - Net::height;
@@ -2291,6 +2308,8 @@ namespace Draw {
 			y = Term::height - height + 1 - (cpu_bottom ? Cpu::height : 0);
 			Logger::debug("Fan calc 5");
 
+			Logger::debug("Calc Box FAN");
+			Logger::debug(std::to_string(height));
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "fan", "", 9);
 			Logger::debug("Fan calc 5");
 			Logger::debug("End of fan box calculations");
@@ -2312,6 +2331,7 @@ namespace Draw {
 			y = (cpu_bottom and Cpu::shown) ? 1 : Cpu::height + 1;
 		#endif
 			select_max = height - 3;
+			Logger::debug("Calc Box Proc");
 			box = createBox(x, y, width, height, Theme::c("proc_box"), true, "proc", "", 4);
 		}
 	}
