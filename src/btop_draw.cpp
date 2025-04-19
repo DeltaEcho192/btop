@@ -2273,7 +2273,8 @@ namespace Draw {
 				y = cpu_bottom ? 1 : Cpu::height + 1;
 			#endif
 			else
-				y = Term::height - height + 1 - (cpu_bottom ? Cpu::height : 0);
+				y = cpu_bottom ? 1 : Cpu::height + 1 + (Mem::height);
+				//y = Term::height - height + 1 - (cpu_bottom ? Cpu::height : 0);
 
 			b_width = (width > 45) ? 27 : 19;
 			b_height = (height > 10) ? 9 : height - 2;
@@ -2283,10 +2284,9 @@ namespace Draw {
 			u_graph_height = height - 2 - d_graph_height;
 
 			Logger::debug("Calc Box Net");
-			Logger::debug(std::to_string(height));
-			Logger::debug(std::to_string(Term::height));
-			Logger::debug(std::to_string(Cpu::height));
-			Logger::debug(std::to_string(Gpu::height));
+			Logger::debug(std::to_string(y));
+			Logger::debug(std::to_string(Mem::y));
+			Logger::debug(std::to_string(Cpu::y));
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "net", "", 3);
 			box += createBox(b_x, b_y, b_width, b_height, "", false, "download", "upload");
 		}
@@ -2305,7 +2305,7 @@ namespace Draw {
 #endif
 			x = (proc_left and Proc::shown) ? Term::width - width + 1 : 1;
 			Logger::debug("Fan calc 4");
-			y = Term::height - height + 1 - (cpu_bottom ? Cpu::height : 0);
+			y = cpu_bottom ? 1 : Cpu::height + 1 + (Mem::height) + (Net::height);
 			Logger::debug("Fan calc 5");
 
 			Logger::debug("Calc Box FAN");

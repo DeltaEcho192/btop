@@ -3059,8 +3059,8 @@ auto collect(bool no_update) -> fans_info & {
       std::string full_path = *it;
       n = full_path.find_last_of("/");
       string fan_name = full_path.substr(n + 1, 4);
-      Logger::debug("RPM: ");
-      Logger::debug(rpm);
+      //Logger::debug("RPM: ");
+      //Logger::debug(rpm);
       current_fans.fans.at(fan_name).push_back(strtoll(rpm.c_str(), NULL, 10));
       while (cmp_greater(current_fans.fans.at(fan_name).size(), width * 2)) {
 		  current_fans.fans.at(fan_name).pop_front();
