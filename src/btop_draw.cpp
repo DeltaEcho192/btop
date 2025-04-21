@@ -267,14 +267,12 @@ namespace Draw {
 		for (const int& hpos : {y, y + height - 1}) {
 			out += Mv::to(hpos, x) + Symbols::h_line * (width - 1);
 		}
-		Logger::debug("Before IOTA");
 		//? Draw vertical lines and fill if enabled
 		for (const int& hpos : iota(y + 1, y + height - 1)) {
 			out += Mv::to(hpos, x) + Symbols::v_line
 				+  ((fill) ? string(width - 2, ' ') : Mv::r(width - 2))
 				+  Symbols::v_line;
 		}
-		Logger::debug("After IOTA");
 
 		//? Draw corners
 		out += 	Mv::to(y, x) + left_up
@@ -292,7 +290,6 @@ namespace Draw {
 				+  Fx::ub + line_color + Symbols::title_right_down;
 		}
 
-		Logger::debug("End of Create Box");
 		return out + Fx::reset + Mv::to(y + 1, x + 1);
 	}
 
@@ -1975,20 +1972,18 @@ namespace Fan {
 		if (force_redraw) redraw = true;
 		auto tty_mode = Config::getB("tty_mode");
 		auto& graph_symbol = (tty_mode ? "tty" : Config::getS("graph_symbol_mem"));
-		auto& graph_bg = Symbols::graph_symbols.at((graph_symbol == "default" ? Config::getS("graph_symbol") + "_up" : graph_symbol + "_up")).at(6);
+		//auto& graph_bg = Symbols::graph_symbols.at((graph_symbol == "default" ? Config::getS("graph_symbol") + "_up" : graph_symbol + "_up")).at(6);
 
 		string out;
 		out.reserve(height * width);
 
 		if (redraw) {
-			Logger::debug(box);
 			out += box;
 			fan_graphs.clear();
-			fan_graphs["fan1"] = Draw::Graph{fan_meter, graph_height, "Fan", fans.fans.at("fan1"), graph_symbol};
-
+			fan_graphs["fan1"] = Draw::Graph{width - 5, height-5, "", fans.fans.at("fan1"), graph_symbol};
 		}
 
-		int cx = 1, cy =1;
+		int cx = 0, cy =0;
 		//string divider = (graph_height > 0 ? Mv::l(2) + Theme::c("fan_box") + Symbols::div_left + Theme::c("div_line") + Symbols::h_line * (fan_width - 1)
 		//				+ Symbols::div_right + Mv::l(fan_width - 1) + Theme::c("main_fg") : "");
 		//string up = (graph_height >= 2 ? Mv::l(fan_width - 2) + Mv::u(graph_height - 1) : "");
@@ -1998,12 +1993,17 @@ namespace Fan {
 		string title = capitalize("fan1");
 		const string humanized = floating_humanizer(fans.fans.at("fan1").front());
 		//const int offset = max(0, divider.empty() ? 9 - (int)humanized.size() : 0);
+		//Logger::debug(std::to_string(fan_graphs.contains("fan1")));
+		//Logger::debug(std::to_string(fans.fans.at("fan1").front()));
+		//Logger::debug(std::to_string(fans.fans.at("fan1").size()));
+		//for (auto rpm: fans.fans.at("fan1")) {
+		//	Logger::debug(std::to_string(rpm));
+		//}
 		const string graphics = (
-				fan_graphs.contains("fan1") ? fan_graphs.at("fan1")(fans.fans.at("fan1"), redraw or data_same)
-				: "");
-		Logger::debug(graphics);
-		out += Mv::to(y+1+cy, x+1+cx) + ljust(title, (1)) + (graph_height >= 2 ? "" : " ")
-			+ graphics + Theme::c("title");
+				fan_graphs.contains("fan1") ? fan_graphs.at("fan1")(fans.fans.at("fan1"), false)
+				: "failure");
+		out += Mv::to(y+1+cy, x+1+cx) 
+			+ graphics;
 		cy += (graph_height == 0 ? 1 : graph_height);
 		redraw = false;
 		return out + Fx::reset;
@@ -2060,7 +2060,6 @@ namespace Draw {
 		Mem::shown = s_contains(boxes, "mem");
 		Fan::shown = true;
 		Net::shown = s_contains(boxes, "net");
-		Logger::debug(std::to_string(Net::shown));
 		Proc::shown = s_contains(boxes, "proc");
 
 		//* Calculate and draw cpu box outlines
@@ -2119,7 +2118,6 @@ namespace Draw {
 			b_x = x + width - b_width - 1;
 			b_y = y + ceil((double)(height - 2) / 2) - ceil((double)b_height / 2) + 1;
 
-			Logger::debug("Calc Box CPU");
 			box = createBox(x, y, width, height, Theme::c("cpu_box"), true, (cpu_bottom ? "" : "cpu"), (cpu_bottom ? "cpu" : ""), 1);
 
 			auto& custom = Config::getS("custom_cpu_name");
@@ -2174,7 +2172,6 @@ namespace Draw {
 				string name = Config::getS(std::string("custom_gpu_name") + (char)(shown_panels[i]+'0'));
 				if (name.empty()) name = gpu_names[shown_panels[i]];
 
-				Logger::debug("Calc Box GPU");
 				box[i] += createBox(b_x_vec[i], b_y_vec[i], b_width, b_height_vec[i], "", false, name.substr(0, b_width-5));
 			}
 		}
@@ -2189,13 +2186,6 @@ namespace Draw {
 
 			width = round((double)Term::width * (Proc::shown ? width_p : 100) / 100);
 		#ifdef GPU_SUPPORT
-			Logger::debug(std::to_string(Term::height));
-			Logger::debug(std::to_string(Net::height_p));
-			Logger::debug(std::to_string(Net::shown));
-			Logger::debug(std::to_string(Gpu::shown));
-			Logger::debug(std::to_string(Cpu::shown));
-			Logger::debug(std::to_string(Cpu::height));
-			Logger::debug(std::to_string(Gpu::height));
 			height = ceil((double)Term::height * (100 - Net::height_p * Net::shown*2 - Fan::height_p * Fan::shown * 2 / ((Gpu::shown != 0 and Cpu::shown) + 8)) / 100) - Cpu::height - Gpu::height*Gpu::shown;
 		#else
 			height = ceil((double)Term::height * (100 - Cpu::height_p * Cpu::shown - Net::height_p * Net::shown) / 100) + 1;
@@ -2244,8 +2234,6 @@ namespace Draw {
 				if (disks_width < 25) disk_meter += 14;
 			}
 
-			Logger::debug("Calc Box MEM");
-			Logger::debug(std::to_string(height));
 			box = createBox(x, y, width, height, Theme::c("mem_box"), true, "mem", "", 2);
 			box += Mv::to(y, (show_disks ? divider + 2 : x + width - 9)) + Theme::c("mem_box") + Symbols::title_left + (show_disks ? Fx::b : "")
 				+ Theme::c("hi_fg") + 'd' + Theme::c("title") + "isks" + Fx::ub + Theme::c("mem_box") + Symbols::title_right;
@@ -2284,37 +2272,22 @@ namespace Draw {
 			d_graph_height = round((double)(height - 2) / 2);
 			u_graph_height = height - 2 - d_graph_height;
 
-			Logger::debug("Calc Box Net");
-			Logger::debug(std::to_string(y));
-			Logger::debug(std::to_string(Mem::y));
-			Logger::debug(std::to_string(Cpu::y));
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "net", "", 3);
 			box += createBox(b_x, b_y, b_width, b_height, "", false, "download", "upload");
 		}
 
 		if (Fan::shown) {
-			Logger::debug("Start Fan box calculations");
 			using namespace Fan;
 			width = round((double)Term::width * (Proc::shown ? width_p : 100) / 100);
-			Logger::debug("Fan calc 1");
 #ifdef GPU_SUPPORT
 			height = Term::height - Cpu::height - Gpu::height*Gpu::shown - Mem::height - Net::height;
-			Logger::debug("Fan calc 2");
 #else
 				height = Term::height - Cpu::height - Mem::height - Net::height;
-			Logger::debug("Fan calc 3");
 #endif
 			x = (proc_left and Proc::shown) ? Term::width - width + 1 : 1;
-			Logger::debug("Fan calc 4");
 			y = cpu_bottom ? 1 : Cpu::height + 1 + (Mem::height) + (Net::height);
-			Logger::debug("Fan calc 5");
 
-			Logger::debug("Calc Box FAN");
-			Logger::debug(std::to_string(height));
 			box = createBox(x, y, width, height, Theme::c("net_box"), true, "fan", "", 9);
-			Logger::debug("Fan calc 5");
-			Logger::debug("End of fan box calculations");
-//			Logger::debug(box);
 		}
 
 		//* Calculate and draw proc box outlines
@@ -2333,7 +2306,6 @@ namespace Draw {
 			y = (cpu_bottom and Cpu::shown) ? 1 : Cpu::height + 1;
 		#endif
 			select_max = height - 3;
-			Logger::debug("Calc Box Proc");
 			box = createBox(x, y, width, height, Theme::c("proc_box"), true, "proc", "", 4);
 		}
 	}
