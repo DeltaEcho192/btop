@@ -446,7 +446,7 @@ namespace Fan {
 	};
 	
 	struct fans_info {
-		std::unordered_map<string, deque<long long>> fans;
+		std::unordered_map<string, int64_t> fans;
 	};
 
 	void discover_fans();

@@ -3037,7 +3037,7 @@ void discover_fans() {
 		} else {
 			fan_name = entry.path().string().substr(n + 1, 4);
 		}
-        current_fans.fans.insert({fan_name, {0}});
+        current_fans.fans.insert({fan_name, 0});
         Logger::debug(fan_name);
         fan_paths.push_back(entry.path().string());
       }
@@ -3069,16 +3069,10 @@ auto collect(bool no_update) -> fans_info & {
 	  } else {
 		  fan_name = full_path.substr(n + 1, 4);
 	  }
-      //Logger::debug("RPM: ");
-      //Logger::debug(fan_name);
-	  auto conv_rpm = (strtoll(rpm.c_str(), NULL, 10)/3500) * 100;
-      Logger::debug(std::to_string(conv_rpm));
-
-      current_fans.fans.at(fan_name).push_back((long long)(((double) strtoll(rpm.c_str(), NULL, 10)/(double)3500) * 100));
-      //current_fans.fans.at(fan_name).push_back(50);
-      while (cmp_greater(current_fans.fans.at(fan_name).size(), width * 2)) {
-		  current_fans.fans.at(fan_name).pop_front();
-	  }
+	  auto rpmLL = strtoll(rpm.c_str(), NULL, 10);
+	  if (rpmLL != 0) {
+		  current_fans.fans.at(fan_name) = strtoll(rpm.c_str(), NULL, 10);
+	  };
     }
   }
   return current_fans;

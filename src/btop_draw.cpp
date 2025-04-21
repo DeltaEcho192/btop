@@ -1965,45 +1965,41 @@ namespace Fan {
 	int fan_width, divider, fan_height, fan_size, fan_meter, graph_height;
 	bool shown = true, redraw = true;
 	string box;
-	std::unordered_map<string, Draw::Graph> fan_graphs;
 
 	string draw(const fans_info& fans, bool force_redraw, bool data_same) {
 		if (Runner::stopping) return "";
 		if (force_redraw) redraw = true;
 		auto tty_mode = Config::getB("tty_mode");
-		auto& graph_symbol = (tty_mode ? "tty" : Config::getS("graph_symbol_mem"));
-		//auto& graph_bg = Symbols::graph_symbols.at((graph_symbol == "default" ? Config::getS("graph_symbol") + "_up" : graph_symbol + "_up")).at(6);
 
 		string out;
 		out.reserve(height * width);
 
 		if (redraw) {
 			out += box;
-			fan_graphs.clear();
-			fan_graphs["fan1"] = Draw::Graph{width - 5, height-5, "", fans.fans.at("fan1"), graph_symbol};
 		}
 
-		int cx = 0, cy =0;
-		//string divider = (graph_height > 0 ? Mv::l(2) + Theme::c("fan_box") + Symbols::div_left + Theme::c("div_line") + Symbols::h_line * (fan_width - 1)
-		//				+ Symbols::div_right + Mv::l(fan_width - 1) + Theme::c("main_fg") : "");
-		//string up = (graph_height >= 2 ? Mv::l(fan_width - 2) + Mv::u(graph_height - 1) : "");
+		int cx = 0, cy = 0;
 
-		
+		//string title = capitalize("fan1");
 
-		string title = capitalize("fan1");
-		const string humanized = floating_humanizer(fans.fans.at("fan1").front());
-		//const int offset = max(0, divider.empty() ? 9 - (int)humanized.size() : 0);
-		//Logger::debug(std::to_string(fan_graphs.contains("fan1")));
-		//Logger::debug(std::to_string(fans.fans.at("fan1").front()));
-		//Logger::debug(std::to_string(fans.fans.at("fan1").size()));
-		//for (auto rpm: fans.fans.at("fan1")) {
-		//	Logger::debug(std::to_string(rpm));
-		//}
-		const string graphics = (
-				fan_graphs.contains("fan1") ? fan_graphs.at("fan1")(fans.fans.at("fan1"), false)
-				: "failure");
-		out += Mv::to(y+1+cy, x+1+cx) 
-			+ graphics;
+		int size_diff = height / fans.fans.size();
+		if (size_diff <= 0) {
+			Logger::error("There is not enough space to display all the items");
+		}
+
+		for (const auto& fan : fans.fans) {
+			if (fan.second != 0) {
+				out += Mv::to(y+1+cy, x+1+cx) 
+					+ fan.first + Mv::r(2);
+				if (fan.second <= 1000) {
+					out += std::to_string(fan.second) + " ";
+				} else {
+					out += std::to_string(fan.second);
+				}
+				cy += size_diff;
+			}
+		}
+
 		cy += (graph_height == 0 ? 1 : graph_height);
 		redraw = false;
 		return out + Fx::reset;
